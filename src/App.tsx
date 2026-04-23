@@ -177,7 +177,7 @@ export default function App() {
     }
   };
 
-  const currentAvailableSales = (salesData && activeTab) ? salesData[activeTab] : [];
+  const currentAvailableSales = (salesData && activeTab && salesData[activeTab]) ? salesData[activeTab] : [];
 
   if (isLoading) {
     return (
@@ -195,7 +195,7 @@ export default function App() {
     <div className="flex flex-col h-screen bg-black font-sans text-white overflow-hidden selection:bg-[#00e676] selection:text-black">
       {/* Tab Switcher */}
       <div className="flex justify-center py-4 bg-[#030e06] border-b border-white/5 space-x-2 overflow-x-auto px-4">
-        {salesData && Object.keys(salesData).map(key => {
+        {salesData && Object.keys(salesData).length > 0 && Object.keys(salesData).map(key => {
           const theme = THEMES[key] || THEMES['forex'];
           const isActive = activeTab === key;
           return (

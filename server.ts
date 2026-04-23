@@ -6,21 +6,20 @@ import path from 'path';
 import cors from 'cors';
 import axios from 'axios';
 
-async function startServer() {
-  const app = express();
-  const httpServer = createServer(app);
-  const io = new Server(httpServer, {
-    cors: {
-      origin: '*',
-      methods: ['GET', 'POST']
-    }
-  });
+export const app = express();
+export const httpServer = createServer(app);
+export const io = new Server(httpServer, {
+  cors: {
+    origin: '*',
+    methods: ['GET', 'POST']
+  }
+});
 
+async function startServer() {
   const PORT = 3000;
 
   app.use(cors());
   app.use(express.json());
-  app.use(cors());
 
   // Proxy endpoint for Google Sheets to bypass CORS
   app.get('/api/proxy-sheet', async (req, res) => {
@@ -83,15 +82,14 @@ async function startServer() {
     res.status(200).json({ success: true, message: 'Update signal broadcasted' });
   });
 
-  // Vite middleware for development
-  if (process.env.NODE_ENV !== 'production') {
+  if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: 'spa',
     });
     app.use(vite.middlewares);
-  } else {
-    // Production static serving
+  } else if (process.env.NODE_ENV === 'production' && !process.env.VERCEL) {
+    // Production static serving (only if NOT on Vercel, Vercel handles static itself)
     const distPath = path.join(process.cwd(), 'dist');
     app.use(express.static(distPath));
     app.get('*', (req, res) => {
@@ -99,9 +97,12 @@ async function startServer() {
     });
   }
 
-  httpServer.listen(PORT, '0.0.0.0', () => {
-    console.log(`Server running on http://localhost:${PORT}`);
-  });
+  // Only listen if we're not in a serverless environment (detected by VERCEL env var)
+  if (!process.env.VERCEL) {
+    httpServer.listen(PORT, '0.0.0.0', () => {
+      console.log(`Server running on http://localhost:${PORT}`);
+    });
+  }
 }
 
 startServer().catch(err => {
